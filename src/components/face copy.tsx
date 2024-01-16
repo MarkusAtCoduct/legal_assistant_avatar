@@ -10,7 +10,6 @@ export const FaceCopy = (influences: any) => {
 	const meshRef = useRef<THREE.Mesh>(null);
 
 	const ktx2Loader = new KTX2Loader().setTranscoderPath("jsm/libs/basis/");
-	//.detectSupport( renderer );
 
 	useLayoutEffect(() => {
 		meshRef.current?.updateMorphTargets();

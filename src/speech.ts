@@ -2,10 +2,10 @@ import * as sdk from "microsoft-cognitiveservices-speech-sdk";
 import { useEffect, useState } from 'react';
 
 export const useSpeechSynthesis = () => {
-  const [animation, setAnimation] = useState(null);
+  const [animation, setAnimation] = useState([]);
   const [speechSynthesizer, setSpeechSynthesizer] = useState(null);
 
-  const startSpeechSynthesis = (text: string) => {
+  const startSpeechSynthesis = async (text: string) => {
     const speechConfig = sdk.SpeechConfig.fromSubscription(import.meta.env.VITE_SPEECH_KEY, import.meta.env.VITE_SPEECH_REGION);
     const audioConfig = sdk.AudioConfig.fromDefaultSpeakerOutput();
     const speechSynthesisVoiceName  = "de-DE-KatjaNeural";  
@@ -21,8 +21,11 @@ export const useSpeechSynthesis = () => {
     let synthesizer = new sdk.SpeechSynthesizer(speechConfig, audioConfig);
 
     synthesizer.visemeReceived = function(s, e) {
-        const animation = e.animation;
-        setAnimation(JSON.parse(animation));
+        const ani = JSON.parse(e.animation);
+       console.log(ani.BlendShapes);
+        //animation.push(JSON.parse(ani));
+        setAnimation(prevAnimation => [...prevAnimation, ani]);
+
     };
 
     synthesizer.speakSsmlAsync(ssml,
@@ -31,6 +34,7 @@ export const useSpeechSynthesis = () => {
           console.error("Speech synthesis canceled, " + result.errorDetails +
             "\nDid you set the speech resource key and region values?");
         }
+        
         synthesizer.close();
         setSpeechSynthesizer(null);
       },
@@ -40,11 +44,8 @@ export const useSpeechSynthesis = () => {
         setSpeechSynthesizer(null);
       }
     );
-
     setSpeechSynthesizer(synthesizer);
-
-    return animation;
-  }// Re-run the effect when `text` changes
+  }
 
   useEffect(() => {
     return () => {

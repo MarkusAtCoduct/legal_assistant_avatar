@@ -2,7 +2,7 @@ import './App.css'
 
 import { OrbitControls } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { FaceCopy } from './components/face copy'
 import { useSpeechSynthesis } from './speech'
 
@@ -10,8 +10,11 @@ import { useSpeechSynthesis } from './speech'
 function App() {
 
   const [text, setText] = useState('') 
-  const { startSpeechSynthesis} = useSpeechSynthesis();
+  const { startSpeechSynthesis, animation} = useSpeechSynthesis();
 
+  useEffect(() => {
+    console.log(animation)
+  }, [animation])
 
   return (
     <>
