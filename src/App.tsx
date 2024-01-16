@@ -12,7 +12,7 @@ function App() {
   const [text, setText] = useState('') 
   const { startSpeechSynthesis} = useSpeechSynthesis();
 
-console.log(startSpeechSynthesis("hello"))
+
   return (
     <>
 <Canvas >
@@ -29,7 +29,7 @@ console.log(startSpeechSynthesis("hello"))
   onChange={(e) => setText(e.target.value)}
     
   />
-{/* <button onClick></button> */}
+<button onClick={() => startSpeechSynthesis(text)}></button>
     </>
   )
 }

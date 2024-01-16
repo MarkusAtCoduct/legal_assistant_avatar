@@ -24,7 +24,7 @@ export const useSpeechSynthesis = () => {
         const animation = e.animation;
         setAnimation(JSON.parse(animation));
     };
-/*
+
     synthesizer.speakSsmlAsync(ssml,
       function (result) {
         if (result.reason !== sdk.ResultReason.SynthesizingAudioCompleted) {
@@ -42,11 +42,10 @@ export const useSpeechSynthesis = () => {
     );
 
     setSpeechSynthesizer(synthesizer);
-*/
+
     return animation;
   }// Re-run the effect when `text` changes
 
-  // Cleanup function
   useEffect(() => {
     return () => {
       if (speechSynthesizer) {
