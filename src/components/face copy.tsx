@@ -27,7 +27,7 @@ export const FaceCopy = (shapekeys: any) => {
     if (!head || !shapekeys) return;
 
   // Check if the morph targets are available
-    const mixer = new AnimationMixer(mesh);
+    const mixer = new AnimationMixer(scene);
     
     mixerRef.current = mixer;
     const morphTargetNames = Object.keys(head.morphTargetDictionary);
@@ -52,7 +52,7 @@ export const FaceCopy = (shapekeys: any) => {
     const tracks = Object.entries(shapekey).map(([name, value], index) => {
         const time = index / (Object.keys(shapekey).length - 1);
         return new THREE.KeyframeTrack(
-            `${name}.morphTargetInfluences`,
+            `mesh_2.morphTargetInfluences[${name}]`,
             [time, time + 1],
             [value, 0]
         );
@@ -69,13 +69,57 @@ export const FaceCopy = (shapekeys: any) => {
 
 
     // Play the first animation
-  mixer.clipAction( animations[0]).play();
+  //mixer.clipAction( animations[0]).play();
 
   console.log(animations[0]);
 }, [head, shapekeys]);
 
 
-  useFrame((state, delta) => {
+
+/*
+useLayoutEffect(() => {
+  if (!shapekeys) return;
+  const mixer = new AnimationMixer(scene);
+  mixerRef.current = mixer;
+  let animation = [];
+  for (let i = 0; i < Object.keys(head.morphTargetDictionary).length; i++) {
+    animation.push([])
+  }
+  let time = []
+  let finishedFrames = 0
+  shapekeys.shapekeys.forEach((d, i) => {
+      Object.entries(d).forEach(([key, value]) => {
+
+        if (!(key in head.morphTargetDictionary)) {
+          return;
+        }
+        animation[head.morphTargetDictionary[key]].push(value)
+      });
+      time.push(finishedFrames / 60)
+      finishedFrames++
+
+  })
+  console.log(animation)
+  let tracks = []
+
+    let flag = false;
+  Object.entries(shapekeys.shapekeys).forEach(([key, value]) => {
+
+    if (!(key in head.morphTargetDictionary)) {return};
+
+    let i = head.morphTargetDictionary[key]
+
+      let track = new NumberKeyframeTrack(`.morphTargetInfluences[${i}]`, time, animation[i])
+
+      tracks.push(track)
+
+  });
+
+});  
+*/
+
+
+useFrame((state, delta) => {
     if (mixerRef.current) {
       mixerRef.current.update(delta);
     }
