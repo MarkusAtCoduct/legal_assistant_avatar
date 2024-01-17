@@ -24,15 +24,14 @@ export const useSpeechSynthesis = () => {
         const ani = JSON.parse(e.animation);
        console.log(ani.BlendShapes);
         //animation.push(JSON.parse(ani));
-        setAnimation(prevAnimation => [...prevAnimation, ani]);
-
-    };
-
-    synthesizer.speakSsmlAsync(ssml,
+        setAnimation(prevAnimation => [...prevAnimation, ani.BlendShapes]);
+      };
+      
+      synthesizer.speakSsmlAsync(ssml,
       function (result) {
         if (result.reason !== sdk.ResultReason.SynthesizingAudioCompleted) {
           console.error("Speech synthesis canceled, " + result.errorDetails +
-            "\nDid you set the speech resource key and region values?");
+          "\nDid you set the speech resource key and region values?");
         }
         
         synthesizer.close();
@@ -46,7 +45,7 @@ export const useSpeechSynthesis = () => {
     );
     setSpeechSynthesizer(synthesizer);
   }
-
+  
   useEffect(() => {
     return () => {
       if (speechSynthesizer) {
@@ -54,6 +53,8 @@ export const useSpeechSynthesis = () => {
       }
     };
   }, [speechSynthesizer]);
-
+  
+  
+  
   return { animation, startSpeechSynthesis };
 };

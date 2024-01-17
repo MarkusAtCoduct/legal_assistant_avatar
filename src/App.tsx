@@ -1,43 +1,42 @@
-import './App.css'
+import "./App.css";
 
-import { OrbitControls } from '@react-three/drei'
-import { Canvas } from '@react-three/fiber'
-import { useEffect, useState } from 'react'
-import { FaceCopy } from './components/face copy'
-import { useSpeechSynthesis } from './speech'
-
+import { OrbitControls } from "@react-three/drei";
+import { Canvas } from "@react-three/fiber";
+import { useState } from "react";
+import { FaceCopy } from "./components/face copy";
+import { useSpeechSynthesis } from "./speech";
 
 function App() {
+  const [text, setText] = useState("");
+  const { startSpeechSynthesis, animation } = useSpeechSynthesis();
 
-  const [text, setText] = useState('') 
-  const { startSpeechSynthesis, animation} = useSpeechSynthesis();
-
-  useEffect(() => {
-    console.log(animation)
-  }, [animation])
+  // useEffect(() => {
+  //   //console.log(animation);
+  // }, [animation]);
 
   return (
     <>
-<Canvas >
-    <ambientLight intensity={Math.PI / 2} />
-    <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} decay={0} intensity={Math.PI} />
-    <pointLight position={[-10, -10, -10]} decay={0} intensity={Math.PI} />
-    
-      {/* <Model /> */}
-      <FaceCopy/>
-      <OrbitControls />
-  </Canvas>
-  <input type="text"
-  value={text}
-  onChange={(e) => setText(e.target.value)}
-    
-  />
-<button onClick={() => startSpeechSynthesis(text)}></button>
+      <Canvas>
+        <ambientLight intensity={Math.PI / 2} />
+        <spotLight
+          position={[10, 10, 10]}
+          angle={0.15}
+          penumbra={1}
+          decay={0}
+          intensity={Math.PI}
+        />
+        <pointLight position={[-10, -10, -10]} decay={0} intensity={Math.PI} />
+        <FaceCopy key={animation} shapekeys={animation.flat()} />
+        <OrbitControls />
+      </Canvas>
+      <input
+        type="text"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+      />
+      <button onClick={() => startSpeechSynthesis(text)}></button>
     </>
-  )
+  );
 }
 
-export default App
-
-
-
+export default App;
