@@ -1,11 +1,12 @@
 import { useGLTF } from "@react-three/drei";
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { KTX2Loader } from "three/examples/jsm/Addons.js";
 import GUI from "three/examples/jsm/libs/lil-gui.module.min.js";
 import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 import { AnimationClip, AnimationMixer, AnimationAction, Clock } from "three";
 import { useFrame } from "@react-three/fiber";
+import { CognitiveSubscriptionKeyAuthentication } from "microsoft-cognitiveservices-speech-sdk/distrib/lib/src/common.speech/CognitiveSubscriptionKeyAuthentication";
 
 export const FaceCopy = (shapekeys: any) => {
   const meshRef = useRef<THREE.Mesh>(null);
@@ -14,62 +15,74 @@ export const FaceCopy = (shapekeys: any) => {
 
   const ktx2Loader = new KTX2Loader().setTranscoderPath("jsm/libs/basis/");
 
-  const { scene } = useGLTF("/facecap.glb", true, true, (loader) => {
+  const { scene, animations } = useGLTF("/facecap.glb", true, true, (loader) => {
     loader.setKTX2Loader(ktx2Loader), loader.setMeshoptDecoder(MeshoptDecoder);
   });
 
- 
-
 	const mesh = scene.children[0];
 	const head = mesh.getObjectByName("mesh_2");
-
+  
+  
   useLayoutEffect(() => {
-	
-	if (!head) {
-	  console.error("The head object was not found");
-	  return;
-	}
-    const mixer = new AnimationMixer(head);
+    if (!head || !shapekeys) return;
+
+  // Check if the morph targets are available
+    const mixer = new AnimationMixer(mesh);
+    
     mixerRef.current = mixer;
-	//console.log(meshRef.current?.morphTargetDictionary)
+    const morphTargetNames = Object.keys(head.morphTargetDictionary);
 
-    Object.entries(shapekeys.shapekeys).forEach(([name, influences]) => {
-		const keyframes = influences.map((influence, index) => ({
-			value: influence,
-			time: index / (influences.length - 1),
-		  }));
+    const keys = shapekeys.shapekeys
 
-      const track = new THREE.NumberKeyframeTrack(
-        `${name}.morphTargetInfluence`,
-        keyframes.map((keyframe) => keyframe.time),
-        keyframes.map((keyframe) => keyframe.value)
-      );
+    const shapekeyMapping = keys.map((shapekey) => {
+      shapekey = shapekey.slice(0, 52);
+      return shapekey.reduce((acc, value, index) => {
+          const name = morphTargetNames[index];
+          if (!name) {
+              console.error(`No morph target name found for index ${index}`);
+              return acc;
+          }
+          acc[name] = value;
+          return acc;
+      }, {});
+  });
+  let allTracks = [];
 
-      const animationClip = new THREE.AnimationClip(name, -1, [track]);
-
-      const action = mixer.clipAction(animationClip);
-      action.play();
+  shapekeyMapping.forEach((shapekey, index) => {
+    const tracks = Object.entries(shapekey).map(([name, value], index) => {
+        const time = index / (Object.keys(shapekey).length - 1);
+        return new THREE.KeyframeTrack(
+            `${name}.morphTargetInfluences`,
+            [time, time + 1],
+            [value, 0]
+        );
     });
+    allTracks = [...allTracks, ...tracks];
 
-    head.updateMorphTargets();
-  }, [shapekeys]);
+  });
+    // Add the tracks to the mixer
+    const clip = new THREE.AnimationClip(`shapekey`, 1, allTracks);
+      //const clip = new THREE.AnimationClip("expression", 1, [track]);
+     //console.log(clip);
+      mixer.clipAction(clip).play();
+      //action.play();
 
-  useFrame(() => {
+
+    // Play the first animation
+  mixer.clipAction( animations[0]).play();
+
+  console.log(animations[0]);
+}, [head, shapekeys]);
+
+
+  useFrame((state, delta) => {
     if (mixerRef.current) {
-      const delta = clock.getDelta();
       mixerRef.current.update(delta);
     }
   });
 
-
-
-  if (!head.morphTargetInfluences || !head.morphTargetDictionary) {
-    console.error("The head object does not have morph targets");
-    return null;
-  }
-
   const influences = head.morphTargetInfluences;
-
+  
   const gui = new GUI();
   gui.close();
   for (const [key, value] of Object.entries(head.morphTargetDictionary)) {
@@ -80,8 +93,8 @@ export const FaceCopy = (shapekeys: any) => {
   }
 
   return (
-    <mesh ref={meshRef}>
-      <primitive object={scene} />
+    <mesh ref={meshRef} >
+      <primitive object={scene}  />
     </mesh>
   );
 };

@@ -22,7 +22,7 @@ export const useSpeechSynthesis = () => {
 
     synthesizer.visemeReceived = function(s, e) {
         const ani = JSON.parse(e.animation);
-       console.log(ani.BlendShapes);
+       //console.log(ani.BlendShapes);
         //animation.push(JSON.parse(ani));
         setAnimation(prevAnimation => [...prevAnimation, ani.BlendShapes]);
       };
