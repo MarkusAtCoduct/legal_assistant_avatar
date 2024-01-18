@@ -12,7 +12,8 @@ export const useSpeechSynthesis = () => {
     const ssml = `<speak version='1.0' xml:lang='en-US' xmlns='http://www.w3.org/2001/10/synthesis' xmlns:mstts='http://www.w3.org/2001/mstts'> \r\n \
         <voice name='${speechSynthesisVoiceName}'> \r\n \
         <mstts:viseme type="FacialExpression"/> \r\n \
-            <mstts:viseme type='redlips_front'/> \r\n \
+
+
             '${text}' \r\n \
         </voice> \r\n \
     </speak>`;
@@ -21,10 +22,13 @@ export const useSpeechSynthesis = () => {
     let synthesizer = new sdk.SpeechSynthesizer(speechConfig, audioConfig);
 
     synthesizer.visemeReceived = function(s, e) {
+
         const ani = JSON.parse(e.animation);
        //console.log(ani.BlendShapes);
         //animation.push(JSON.parse(ani));
+        
         setAnimation(prevAnimation => [...prevAnimation, ani.BlendShapes]);
+        //setAnimation(prevAnimation => [ani.BlendShapes]);
       };
       
       synthesizer.speakSsmlAsync(ssml,

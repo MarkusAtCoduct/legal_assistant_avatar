@@ -10,10 +10,6 @@ function App() {
   const [text, setText] = useState("");
   const { startSpeechSynthesis, animation } = useSpeechSynthesis();
 
-  // useEffect(() => {
-  //   //console.log(animation);
-  // }, [animation]);
-
   return (
     <>
       <Canvas>

@@ -1,5 +1,5 @@
 import { useGLTF } from "@react-three/drei";
-import { useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import * as THREE from "three";
 import { KTX2Loader } from "three/examples/jsm/Addons.js";
 import GUI from "three/examples/jsm/libs/lil-gui.module.min.js";
@@ -20,49 +20,74 @@ export const FaceCopy = (shapekeys: any) => {
 
   const mesh = scene.children[0];
   const head = mesh.getObjectByName("mesh_2");
-
-  useLayoutEffect(() => {
-    if (!head || !shapekeys) return;
-
-    // Check if the morph targets are available
-    const mixer = new AnimationMixer(scene);
-
-    mixerRef.current = mixer;
+  const mixer = new AnimationMixer(scene);
+  let frameIndex = 0;
+  mixerRef.current = mixer;
     const morphTargetNames = Object.keys(head.morphTargetDictionary);
     const keys = shapekeys.shapekeys;
-
     const shapekeyMapping = mapBlendshapes(keys, morphTargetNames);
-    let allTracks = [];
 
-    console.log(shapekeyMapping);
-
-    shapekeyMapping.forEach((shapekey, index) => {
-
-      const tracks = Object.entries(shapekey).map(([name, value], index) => {
-        const time = (index / (Object.keys(shapekey).length - 1));
-        return new THREE.KeyframeTrack(
-          `mesh_2.morphTargetInfluences[${name}]`,
-          [time, time + 3],
-          [value, 0]
-        );
-      });
-      allTracks = [...allTracks, ...tracks];
-    });
+  // useEffect(() => {
+  //   if (!head || !shapekeys) return;
     
-    // Add the tracks to the mixer
-    const clip = new THREE.AnimationClip(`shapekey`, 1, allTracks);
-    const action = mixer.clipAction(clip);
-    console.log(action);
-    //action.setLoop(THREE.LoopOnce, 1);
-    //action.clampWhenFinished = true;
-    action.play();
-  }, [head, shapekeys, scene]);
+  //   const allTracks: any[] = [];
+
+  //   // shapekeyMapping.forEach((shapekey, frameIndex) => {
+  //   //   Object.entries(shapekey).forEach(([name, value], index) => {
+  //   //     const startTime = 0; // S
+  //   //     // Create a track for this morph target
+  //   //     const track = new THREE.NumberKeyframeTrack(
+  //   //       `mesh_2.morphTargetInfluences[${name}]`,
+  //   //       [startTime, startTime + 0.5, startTime + 1], // Keyframe at start, middle, and end
+  //   //       [0, value, 0]
+  //   //     );
+
+  //   //     allTracks.push(track);
+  //   //   });
+  //   // });
+
+  //   // const clip = new THREE.AnimationClip("expression", -1, allTracks);
+  //   // const action = mixer.clipAction(clip);
+  //   // action.setLoop(THREE.LoopOnce, 1);
+  //   // action.clampWhenFinished = true;
+  //   // action.play();
+  // }, []);
 
   useFrame((state, delta) => {
     if (mixerRef.current) {
       mixerRef.current.update(delta);
     }
   });
+
+  useEffect(() => {
+    let frameIndex = 0;
+  
+
+  const updateInterval = setInterval(() => {
+    if (frameIndex >= shapekeyMapping.length) {
+      // If we've gone through all frames, stop the interval
+      clearInterval(updateInterval);
+      return;
+    }
+    
+    
+
+
+    const shapekey = shapekeyMapping[frameIndex];
+    Object.entries(shapekey).forEach(([name, value]) => {
+      console.log(name, value);
+      const morphTargetIndex = head.morphTargetDictionary[name];
+      console.log(head.morphTargetDictionary);
+      head.morphTargetInfluences[morphTargetIndex] = value;
+    });
+ 
+    frameIndex++;
+  }, 20); // Run every 1000 milliseconds (1 second)
+  return () => {
+    // Clear the interval when the component is unmounted
+    clearInterval(updateInterval);
+  };
+}, []);
 
   const influences = head.morphTargetInfluences;
 

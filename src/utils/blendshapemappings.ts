@@ -4,7 +4,7 @@ export const mapBlendshapes = (azureBlendshapes: number[], blendshapeDictionary:
 
     azureBlendshapes.forEach((blendshape) => {
 
-        let blendshapeObject = { 
+        const blendshapeObject = { 
             [blendshapeDictionary[0]]: blendshape[43],
             [blendshapeDictionary[1]]: blendshape[41],
             [blendshapeDictionary[2]]: blendshape[42],
