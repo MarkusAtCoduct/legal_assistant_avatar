@@ -1,36 +1,37 @@
 import "./App.css";
 
-import { OrbitControls } from "@react-three/drei";
+import { OrbitControls, Stage } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { useState } from "react";
 import { FaceCopy } from "./components/face copy";
 import { useSpeechSynthesis } from "./speech";
+import { Face } from "./components/testface";
 
 function App() {
   const [text, setText] = useState("");
-  const { startSpeechSynthesis, animation } = useSpeechSynthesis();
+  const { startSpeechSynthesis, visemes } = useSpeechSynthesis();
 
   return (
     <>
-      <Canvas>
-        <ambientLight intensity={Math.PI / 2} />
-        <spotLight
-          position={[10, 10, 10]}
-          angle={0.15}
-          penumbra={1}
-          decay={0}
-          intensity={Math.PI}
-        />
-        <pointLight position={[-10, -10, -10]} decay={0} intensity={Math.PI} />
-        <FaceCopy key={animation} shapekeys={animation.flat()} />
-        <OrbitControls />
-      </Canvas>
-      <input
+    <div>
+    <input
+      name="text"
         type="text"
         value={text}
         onChange={(e) => setText(e.target.value)}
       />
-      <button onClick={() => startSpeechSynthesis(text)}></button>
+      <button onClick={() => startSpeechSynthesis(text)}> Talk</button>
+      </div>
+      <div className="Canvas">
+      <Canvas>
+        <Stage shadows>
+        <FaceCopy visemeData={visemes} />
+        {/* <Face key={text} shapekeys={animation} text={text}/> */}
+        </Stage>
+        <OrbitControls />
+      </Canvas>
+      
+    </div>
     </>
   );
 }

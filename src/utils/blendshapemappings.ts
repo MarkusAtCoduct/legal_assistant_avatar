@@ -1,7 +1,8 @@
 
 export const mapBlendshapes = (azureBlendshapes: number[], blendshapeDictionary: string[]) => {
     let blendshapes = [];
-
+    if (!azureBlendshapes) return; 
+  
     azureBlendshapes.forEach((blendshape) => {
 
         const blendshapeObject = { 

@@ -1,16 +1,17 @@
 import { useGLTF } from "@react-three/drei";
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { KTX2Loader } from "three/examples/jsm/Addons.js";
 import GUI from "three/examples/jsm/libs/lil-gui.module.min.js";
 import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
-import { AnimationMixer } from "three";
 import { useFrame } from "@react-three/fiber";
 import { mapBlendshapes } from "../utils/blendshapemappings";
+import { useAtom } from "jotai";
+import { speakingAtom } from "../atoms/speakingAtom";
 
-export const FaceCopy = (shapekeys: any) => {
+export const FaceCopy = (visemeData: []) => {
   const meshRef = useRef<THREE.Mesh>(null);
-  const mixerRef = useRef<AnimationMixer | null>(null);
+  const [speaking, setSpeaking] = useAtom(speakingAtom);
 
   const ktx2Loader = new KTX2Loader().setTranscoderPath("jsm/libs/basis/");
 
@@ -20,74 +21,70 @@ export const FaceCopy = (shapekeys: any) => {
 
   const mesh = scene.children[0];
   const head = mesh.getObjectByName("mesh_2");
-  const mixer = new AnimationMixer(scene);
   let frameIndex = 0;
-  mixerRef.current = mixer;
-    const morphTargetNames = Object.keys(head.morphTargetDictionary);
-    const keys = shapekeys.shapekeys;
-    const shapekeyMapping = mapBlendshapes(keys, morphTargetNames);
+  let visemeIndex = 0;
+  const morphTargetNames = Object.keys(head.morphTargetDictionary);
+  const test = visemeData.visemeData;
 
-  // useEffect(() => {
-  //   if (!head || !shapekeys) return;
-    
-  //   const allTracks: any[] = [];
-
-  //   // shapekeyMapping.forEach((shapekey, frameIndex) => {
-  //   //   Object.entries(shapekey).forEach(([name, value], index) => {
-  //   //     const startTime = 0; // S
-  //   //     // Create a track for this morph target
-  //   //     const track = new THREE.NumberKeyframeTrack(
-  //   //       `mesh_2.morphTargetInfluences[${name}]`,
-  //   //       [startTime, startTime + 0.5, startTime + 1], // Keyframe at start, middle, and end
-  //   //       [0, value, 0]
-  //   //     );
-
-  //   //     allTracks.push(track);
-  //   //   });
-  //   // });
-
-  //   // const clip = new THREE.AnimationClip("expression", -1, allTracks);
-  //   // const action = mixer.clipAction(clip);
-  //   // action.setLoop(THREE.LoopOnce, 1);
-  //   // action.clampWhenFinished = true;
-  //   // action.play();
-  // }, []);
+  let accumulatedDelta = 0;
 
   useFrame((state, delta) => {
-    if (mixerRef.current) {
-      mixerRef.current.update(delta);
+    // console.log(speaking);
+    if (test.length === 0 || visemeIndex === test.length) return;
+    accumulatedDelta += delta;
+    let frameOffsetInSeconds;
+    if(visemeIndex === 0) {  frameOffsetInSeconds = test[visemeIndex].frameOffset / 10000;}
+    else {
+    frameOffsetInSeconds = (test[visemeIndex].frameOffset - test[visemeIndex-1].frameOffset) / 10000;
     }
+
+if (accumulatedDelta > 1/80) {
+    const shapekeyMapping = mapBlendshapes(
+      test[visemeIndex].visemeBlendshapes,
+      morphTargetNames
+    );
+    if (shapekeyMapping && shapekeyMapping[frameIndex]) {
+      //console.log(shapekeyMapping);
+      Object.entries(shapekeyMapping[frameIndex]).forEach(
+        ([influenceName, value]) => {
+          const influenceIndex = head.morphTargetDictionary[influenceName];
+          head.morphTargetInfluences[influenceIndex] = value;
+        }
+      );
+      frameIndex++;
+    }
+    if (shapekeyMapping && frameIndex >= shapekeyMapping.length) {
+      visemeIndex++;
+      frameIndex = 0;
+    }
+    accumulatedDelta = 0;
+  }
+
   });
 
-  useEffect(() => {
-    let frameIndex = 0;
-  
 
-  const updateInterval = setInterval(() => {
-    if (frameIndex >= shapekeyMapping.length) {
-      // If we've gone through all frames, stop the interval
-      clearInterval(updateInterval);
-      return;
-    }
-    
-    
+  //const shapekeyMapping = mapBlendshapes(keys, morphTargetNames);
 
+  // let accumulatedDelta = 0;
 
-    const shapekey = shapekeyMapping[frameIndex];
-    Object.entries(shapekey).forEach(([name, value]) => {
-      console.log(name, value);
-      const morphTargetIndex = head.morphTargetDictionary[name];
-      console.log(head.morphTargetDictionary);
-      head.morphTargetInfluences[morphTargetIndex] = value;
-    });
- 
-    frameIndex++;
-  }, 20); // Run every 1000 milliseconds (1 second)
-  return () => {
-    // Clear the interval when the component is unmounted
-    clearInterval(updateInterval);
-  };
-}, []);
+  // useFrame((state, delta) => {
+  //   if (frameIndex >= shapekeyMapping.length) return;
+  //   accumulatedDelta += delta;
+
+  //   if (accumulatedDelta > 1 / 60) {
+  //     if (shapekeyMapping && shapekeyMapping[frameIndex]) {
+  //       Object.entries(shapekeyMapping[frameIndex]).forEach(
+  //         ([influenceName, value]) => {
+  //           const influenceIndex = head.morphTargetDictionary[influenceName];
+  //           head.morphTargetInfluences[influenceIndex] = value;
+  //         }
+  //       );
+
+  //       frameIndex++;
+  //     }
+  //     accumulatedDelta = 0;
+  //   }
+  // });
 
   const influences = head.morphTargetInfluences;
 

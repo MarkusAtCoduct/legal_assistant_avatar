@@ -1,64 +1,94 @@
+import { useAtom } from "jotai";
 import * as sdk from "microsoft-cognitiveservices-speech-sdk";
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { speakingAtom } from "./atoms/speakingAtom";
 
 export const useSpeechSynthesis = () => {
-  const [animation, setAnimation] = useState([]);
-  const [speechSynthesizer, setSpeechSynthesizer] = useState(null);
+  //const [animation, setAnimation] = useState([]);
+  const [visemes, setVisemes] = useState([]);
+  const [speaking, setSpeaking] = useAtom(speakingAtom);
+
+  const tempVisemeBlendshapes = [];
+  const tempAudioOffsets = [];
+
+  const visemeMap = [];
 
   const startSpeechSynthesis = async (text: string) => {
+
+    setVisemes([]);
+    setSpeaking(true);
+
     const speechConfig = sdk.SpeechConfig.fromSubscription(import.meta.env.VITE_SPEECH_KEY, import.meta.env.VITE_SPEECH_REGION);
-    const audioConfig = sdk.AudioConfig.fromDefaultSpeakerOutput();
+    
+    
+    const audioContext = new (window.AudioContext)();
+    const audioDestination = audioContext.createMediaStreamDestination();
+   const audioConfig = sdk.AudioConfig.fromDefaultSpeakerOutput();
+  //const audioConfig = sdk.AudioConfig.fromStreamOutput(audioDestination.stream);
     const speechSynthesisVoiceName  = "de-DE-KatjaNeural";  
     const ssml = `<speak version='1.0' xml:lang='en-US' xmlns='http://www.w3.org/2001/10/synthesis' xmlns:mstts='http://www.w3.org/2001/mstts'> \r\n \
         <voice name='${speechSynthesisVoiceName}'> \r\n \
         <mstts:viseme type="FacialExpression"/> \r\n \
-
-
+        
             '${text}' \r\n \
+       
         </voice> \r\n \
     </speak>`;
+
     
     speechConfig.setProperty(sdk.PropertyId.SpeechServiceResponse_RequestSentenceBoundary, "true");
-    let synthesizer = new sdk.SpeechSynthesizer(speechConfig, audioConfig);
+    const synthesizer = new sdk.SpeechSynthesizer(speechConfig, audioConfig);
+    let isFirstViseme = true;
 
     synthesizer.visemeReceived = function(s, e) {
-
+      if (isFirstViseme) {
+        setSpeaking(true);
+        isFirstViseme = false;
+      }
+        console.log(e);
+        if (e.audioOffset / 10000 > 0){        
+          tempAudioOffsets.push(e.audioOffset / 10000);
+        }
+        if (e.animation !== undefined){
         const ani = JSON.parse(e.animation);
-       //console.log(ani.BlendShapes);
-        //animation.push(JSON.parse(ani));
-        
-        setAnimation(prevAnimation => [...prevAnimation, ani.BlendShapes]);
-        //setAnimation(prevAnimation => [ani.BlendShapes]);
+        tempVisemeBlendshapes.push(ani.BlendShapes);
+        }
+
       };
-      
+
+
+
+      console.log(synthesizer.internalData)
+
       synthesizer.speakSsmlAsync(ssml,
       function (result) {
+        console.log(result.audioDuration / 100000, "ms");
+        
+        if (result.reason === sdk.ResultReason.SynthesizingAudioCompleted) {
+          
+          tempAudioOffsets.forEach((offset, index) => {
+            visemeMap.push({frameOffset: offset, visemeBlendshapes: tempVisemeBlendshapes[index]});
+            
+          });
+          setVisemes(visemeMap);
+          setSpeaking(false);
+      }
         if (result.reason !== sdk.ResultReason.SynthesizingAudioCompleted) {
           console.error("Speech synthesis canceled, " + result.errorDetails +
           "\nDid you set the speech resource key and region values?");
-        }
-        
+        }        
         synthesizer.close();
-        setSpeechSynthesizer(null);
+      
       },
       function (err) {
         console.trace("err - " + err);
         synthesizer.close();
-        setSpeechSynthesizer(null);
       }
     );
-    setSpeechSynthesizer(synthesizer);
+
+   
   }
+
   
-  useEffect(() => {
-    return () => {
-      if (speechSynthesizer) {
-        speechSynthesizer.close();
-      }
-    };
-  }, [speechSynthesizer]);
-  
-  
-  
-  return { animation, startSpeechSynthesis };
+  return { visemes, startSpeechSynthesis };
 };
