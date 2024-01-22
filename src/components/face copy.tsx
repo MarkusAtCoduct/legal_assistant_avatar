@@ -15,12 +15,15 @@ export const FaceCopy = (visemeData: []) => {
 
   const ktx2Loader = new KTX2Loader().setTranscoderPath("jsm/libs/basis/");
 
-  const { scene } = useGLTF("/facecap.glb", true, true, (loader) => {
+  const { scene } = useGLTF("/Ingotestproject.glb", true, true, (loader) => {
     loader.setKTX2Loader(ktx2Loader), loader.setMeshoptDecoder(MeshoptDecoder);
   });
 
-  const mesh = scene.children[0];
-  const head = mesh.getObjectByName("mesh_2");
+  // const mesh = scene.children[0];
+  // const head = mesh.getObjectByName("mesh_2");
+
+  const head = scene.getObjectByName("Ingo_FaceMesh_skin001");
+
   let frameIndex = 0;
   let visemeIndex = 0;
   const morphTargetNames = Object.keys(head.morphTargetDictionary);
@@ -43,6 +46,7 @@ if (accumulatedDelta > 1/80) {
       test[visemeIndex].visemeBlendshapes,
       morphTargetNames
     );
+    
     if (shapekeyMapping && shapekeyMapping[frameIndex]) {
       //console.log(shapekeyMapping);
       Object.entries(shapekeyMapping[frameIndex]).forEach(

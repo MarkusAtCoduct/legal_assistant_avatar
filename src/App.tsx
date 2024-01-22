@@ -1,6 +1,6 @@
 import "./App.css";
 
-import { OrbitControls, Stage } from "@react-three/drei";
+import { Bvh, OrbitControls, Stage } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { useState } from "react";
 import { FaceCopy } from "./components/face copy";
@@ -25,8 +25,9 @@ function App() {
       <div className="Canvas">
       <Canvas>
         <Stage shadows>
+          
         <FaceCopy visemeData={visemes} />
-        {/* <Face key={text} shapekeys={animation} text={text}/> */}
+        {/* <Face /> */}
         </Stage>
         <OrbitControls />
       </Canvas>
